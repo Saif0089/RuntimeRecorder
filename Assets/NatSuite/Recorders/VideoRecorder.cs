@@ -32,6 +32,8 @@ public class VideoRecorder : MonoBehaviour
 	private MicrophoneRecorder _microphoneRecorder = null;
 	private AudioManager _manager;
 
+	private int _oldFramerate;
+
 	private void OnDisable()
 	{
 		if (_recorder != null)
@@ -65,6 +67,9 @@ public class VideoRecorder : MonoBehaviour
 
 	private void StartRecording()
 	{
+		_oldFramerate = Application.targetFrameRate;
+		Application.targetFrameRate = _frameRate;
+
 		_manager = Instantiate(audioManagerPrefab, transform);
 
 		var sampleRate = AudioSettings.outputSampleRate;
@@ -88,13 +93,14 @@ public class VideoRecorder : MonoBehaviour
 		_cameraInput = new CameraInput(_recorder, clock, _targetCameras);
 
 		_audioInputs = new AudioInput[_targetAudioSources.Length + (_recordAudioListener ? 1 : 0)];
-		for (int i = 0; i < _targetAudioSources.Length - 1; i++)
+		for (int i = 0; i < _targetAudioSources.Length; i++)
 		{
 			_audioInputs[i] = new AudioInput(_recorder, clock, _targetAudioSources[i], _manager, false);
 		}
 
 		if (_recordAudioListener)
 		{
+			Array.Resize(ref _audioInputs, _audioInputs.Length + 1);
 			_audioInputs[_audioInputs.Length - 1] = new AudioInput(_recorder, FindObjectOfType<AudioListener>(), _manager);
 		}
 
@@ -136,6 +142,7 @@ public class VideoRecorder : MonoBehaviour
 	{
 		if (_recorder != null)
 		{
+			Application.targetFrameRate = _oldFramerate;
 			_cameraInput.Dispose();
 			_cameraInput = null;
 
